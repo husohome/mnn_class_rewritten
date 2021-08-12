@@ -145,6 +145,11 @@ class Preprocessing(Step):
         self._get_raw_data(raw_data_path)._clean_missing(clean_threshold)._get_major_is_top_n_df(top_n, generic_only, use_max)._log()
 
 
+class BuildModelDefault(Step):
+
+    def __init__(self):
+        pass
+
 
 class Analysis:
 
