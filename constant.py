@@ -58,7 +58,9 @@ class SETTINGS:
     USE_MAX=False
     TOP_N=3
     CLEAN_THRESHOLD=.3
-    RAW_DATA_PATH="E:/career_ml/data/major_all.csv"
+    RAW_DATA_PATH="E:/career_ml/data/major_all_fake.csv"
+    INPUT_SHAPE=(99,)
+    METRICS=['accuracy']
     SPECIFIC_MAJORS = {
         "afres":"African American Studies",
         "arcre":"Agriculture",
@@ -113,7 +115,7 @@ class SETTINGS:
         'spash':"Spanish"
     }
 
-    GENERIC_MAJORS= {
+    GENERAL_MAJORS= {
         "afres":"African American Studies",
         "arcre":"Agriculture",
         "asies":"Asian Studies",

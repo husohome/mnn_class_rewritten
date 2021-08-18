@@ -4,7 +4,8 @@ __pycache__/
 *$py.class
 
 # data
-data/
+data/major_all.csv
+data/Majors_item*
 
 
 # C extensions
