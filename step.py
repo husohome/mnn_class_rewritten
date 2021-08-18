@@ -1,7 +1,12 @@
-from abc import ABC, abstractmethod, abstractstaticmethod
+from abc import ABC, abstractmethod
+
+from pandas.core import generic
 from constant import DATA, LOG, SETTINGS
 import pandas as pd
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers, Input, regularizers
+from tensorflow.keras.models import Model, Sequential
 import re
 import sys
 
@@ -142,10 +147,67 @@ class Preprocessing(Step):
             generic_only=SETTINGS.GENERIC_ONLY,
             use_max=SETTINGS.USE_MAX
         ):
+        # uses DATA.FULL_X, DATA.FULL_Y
         self._get_raw_data(raw_data_path)._clean_missing(clean_threshold)._get_major_is_top_n_df(top_n, generic_only, use_max)._log()
 
 
 class BuildModelDefault(Step):
+
+    def _build_model_default(self, generic_only, loss_weights, input_shape, metrics):
+        
+        self.__generic_only = generic_only
+        self.__loss_weights = loss_weights
+        self.__input_shape = input_shape
+        self.__metrics = metrics
+        self.__mode = "default"
+        self.__layers = ["input", 72, "batch_normalization", 64, "batch_normalization", "output"]
+
+        # this is the default model
+        majors = []
+        if generic_only:
+            majors = SETTINGS.GENERAL_MAJORS
+        else:
+            majors = SETTINGS.SPECIFIC_MAJORS
+        
+        input_layer = Input(input_shape)
+        dense_1 = layers.Dense(72, activation='relu')(input_layer)
+        norm_1 = layers.BatchNormalization()(dense_1)
+        dense_2 = layers.Dense(64, activation='relu')(norm_1)
+        norm_2 = layers.BatchNormalization()(dense_2)
+        prediction_layers = [layers.Dense(1, activation='sigmoid', name=major)(norm_2) for major in majors]
+        model = Model(input_layer, prediction_layers)
+        model.compile(
+            optimizer='rmsprop',
+            loss = ['binary_crossentropy' for l in range(len(majors))],
+            metrics=metrics,
+            loss_weights=loss_weights.to_list()
+        )
+        #print(model.summary())
+        return model
+
+    def _log(self):
+        if not hasattr(self.log, LOG.MODEL_BUILD):
+            self.log[LOG.MODEL_BUILD] = []
+
+        self.log[LOG.MODEL_BUILD].append(
+            {
+                "mode" : self.__mode,
+                "generic_only": self.__generic_only,
+                "loss_weights": self.__loss_weights,
+                "input_shape": self.__input_shape,
+                "metrics": self.__metrics,
+                "layers": self.__layers
+            }
+        )
+        return self
+    
+    def run(self, generic_only=SETTINGS.GENERIC_ONLY, loss_weights= None, input_shape=SETTINGS.INPUT_SHAPE, metrics=SETTINGS.METRICS):
+        if loss_weights is None:
+            loss_weights = self.data[DATA.FULL_Y].std()
+        self._build_model_default(generic_only, loss_weights, input_shape, metrics)
+
+
+class SingleRun(Step):
 
     def __init__(self):
         pass
